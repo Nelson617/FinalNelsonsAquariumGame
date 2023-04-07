@@ -372,11 +372,15 @@ public class BasicGameApp implements Runnable, KeyListener, MouseInputListener {
         if (snowman.rec.intersects(SF1.rec)) {
             SF1.isAlive = false;
         }
-        if(snowprints.rec.intersects(snowman.rec)) {for (int x = 0; x < snowprints.dx; x++)
-             {
+        if(snowprints.rec.intersects(snowman.rec)) {
+
+          //  for (int x = 0; x < snowprints.dx; x++)
+          //   {
+                 snowprints.height = snowprints.height + 15;
+                 snowprints.width = snowprints.width +15;
                // snowprints[x]. isalive = true;
 
-            }
+          //  }
         }
 
         for (int x = 0; x < snowflakes.length; x++) {
