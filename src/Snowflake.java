@@ -16,6 +16,7 @@ public class Snowflake {
     public int height;
     public boolean isAlive;            //a boolean to denote if the hero is alive or dead.
     public Rectangle rec;
+    public Image pic;
 
     // METHOD DEFINITION SECTION
 

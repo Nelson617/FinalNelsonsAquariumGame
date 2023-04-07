@@ -13,16 +13,21 @@
 
 //Graphics Libraries
 import java.awt.Graphics2D;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferStrategy;
 import java.awt.*;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.event.MouseInputListener;
 
 
 //*******************************************************************************
 // Class Definition Section
 
-public class BasicGameApp implements Runnable {
+public class BasicGameApp implements Runnable, KeyListener, MouseInputListener {
 
     //Variable Definition Section
     //Declare the variables used in the program
@@ -59,7 +64,9 @@ public class BasicGameApp implements Runnable {
     private Snowflake SF5;
     private Snowflake snowman;
     private Snowflake snowprints;
-
+    private Snowflake [] snowprintsArray;
+    private Snowflake[] snowflakes;
+    private Image[] SnowflakePictures;
 
 
     // Main method definition
@@ -75,8 +82,9 @@ public class BasicGameApp implements Runnable {
     // This section is the setup portion of the program
     // Initialize your variables and construct your program objects here.
     public BasicGameApp() {
-        x=11;
+        x = 11;
         setUpGraphics();
+
 
         //variable and objects
         //create (construct) the objects needed for the game and load up
@@ -88,16 +96,45 @@ public class BasicGameApp implements Runnable {
         SF5Pic = Toolkit.getDefaultToolkit().getImage("Snowflake5.png");
         snowmanPic = Toolkit.getDefaultToolkit().getImage("snowman.png");
         snowprintsPic = Toolkit.getDefaultToolkit().getImage("snowprints.png");
+        SnowflakePictures = new Image[5];
 
-        SF1 = new Snowflake(35,50);
-        SF2 = new Snowflake(900,50);
-        SF3 = new Snowflake(35,50);
-        SF4 = new Snowflake(35,50);
-        SF5 = new Snowflake(35,50);
+        SnowflakePictures[0] = SF1Pic;
+        SnowflakePictures[1] = SF2Pic;
+        SnowflakePictures[2] = SF3Pic;
+        SnowflakePictures[3] = SF4Pic;
+        SnowflakePictures[4] = SF5Pic;
+
+        snowprintsArray = new Snowflake[20];
+        for (int i = 0; i < snowprintsArray.length; i++) {
+            snowprintsArray[i] = new Snowflake(35, 50);
+            snowprintsArray[i].dx = (int) (Math.random() * 10) + 10;
+            snowprintsArray[i].dy = (int) (Math.random() * 10) + 10;
+            snowprintsArray[i].pic =snowprintsPic;
+            snowprintsArray[i].isAlive = false;
+        }
+        snowprintsArray[0].isAlive = true;
+
+        snowflakes = new Snowflake[(int) (Math.random() * 500)];
+        for (int i = 5; i < snowflakes.length; i++) {
+            snowflakes[i] = new Snowflake(35, 50);
+            snowflakes[i].dx = (int) (Math.random() * 10) + 10;
+            snowflakes[i].dy = (int) (Math.random() * 10) + 10;
+            int PicNum = (int) (Math.random() * 5);
+            snowflakes[i].pic = SnowflakePictures[PicNum];
+
+
+        }
+
+
+        SF1 = new Snowflake(35, 50);
+        SF2 = new Snowflake(900, 50);
+        SF3 = new Snowflake(35, 50);
+        SF4 = new Snowflake(35, 50);
+        SF5 = new Snowflake(35, 50);
         snowman = new Snowflake(35, 625);
         snowprints = new Snowflake(35, 50);
         SF2.dx = 15;
-        SF2.dy = 20;
+        SF2.dy = -20;
         SF1.dx = 25;
         SF1.dy = 15;
         SF3.dx = 20;
@@ -110,6 +147,12 @@ public class BasicGameApp implements Runnable {
         snowman.dy = 0;
         snowprints.dx = 5;
         snowprints.dy = 10;
+
+        snowflakes[0] = SF1;
+        snowflakes[1] = SF2;
+        snowflakes[2] = SF3;
+        snowflakes[3] = SF4;
+        snowflakes[4] = SF5;
 
     }// BasicGameApp()
 
@@ -133,20 +176,28 @@ public class BasicGameApp implements Runnable {
     }
 
 
-    public void moveThings()
-    {
+    public void moveThings() {
         //calls the move( ) code in the objects
 //		change();
 //		size();
 //		crash();
-        System.out.println("");
-        SF1.bounce();
-        SF2.bounce();
-        SF3.bounce();
-        SF4.bounce();
-        SF5.bounce();
+        checkIntersections();
+     //u   System.out.println("");
+//        SF1.bounce();
+//        SF2.bounce();
+//        SF3.bounce();
+//        SF4.bounce();
+//        SF5.bounce();
         snowman.bounce();
         snowprints.wrap();
+        for (int x = 0; x < snowflakes.length; x++) {
+            //   System.out.println(snowflakes[x].dx +" dy: " + snowflakes[x].dy);
+            snowflakes[x].bounce();
+        }
+        for (int x = 0; x < snowprintsArray.length; x++) {
+            //   System.out.println(snowflakes[x].dx +" dy: " + snowflakes[x].dy);
+            snowprintsArray[x].bounce();
+        }
 
     }
 
@@ -198,10 +249,8 @@ public class BasicGameApp implements Runnable {
 //	}
 
 
-
-
     //Pauses or sleeps the computer for the amount specified in milliseconds
-    public void pause(int time ){
+    public void pause(int time) {
         //sleep
         try {
             Thread.sleep(time);
@@ -212,6 +261,7 @@ public class BasicGameApp implements Runnable {
 
     //Graphics setup method
     private void setUpGraphics() {
+
         frame = new JFrame("Application Template");   //Create the program window or frame.  Names it.
 
         panel = (JPanel) frame.getContentPane();  //sets up a JPanel which is what goes in the frame
@@ -221,6 +271,9 @@ public class BasicGameApp implements Runnable {
         // creates a canvas which is a blank rectangular area of the screen onto which the application can draw
         // and trap input events (Mouse and Keyboard events)
         canvas = new Canvas();
+        canvas.addKeyListener(this);
+        canvas.addMouseListener(this);
+
         canvas.setBounds(0, 0, WIDTH, HEIGHT);
         canvas.setIgnoreRepaint(true);
 
@@ -247,18 +300,27 @@ public class BasicGameApp implements Runnable {
         g.clearRect(0, 0, WIDTH, HEIGHT);
 
         //draw the image of the astronaut
-        g.drawImage(background, 0,0,WIDTH, HEIGHT, null);
-        if(SF2.isAlive == true)
-            if(SF1.isAlive == true)
-                if(SF3.isAlive == true)
-                    if(SF4.isAlive == true)
-                        if(SF5.isAlive == true)
-                        if(snowman.isAlive == true)
+        g.drawImage(background, 0, 0, WIDTH, HEIGHT, null);
+        for (int x = 0; x < snowflakes.length; x++) {
+            if (snowflakes[x].isAlive) {
+                g.drawImage(snowflakes[x].pic, snowflakes[x].xpos, snowflakes[x].ypos, snowflakes[x].width, snowflakes[x].height, null);
 
-                        {
-                            g.drawImage(SF2Pic, SF2.xpos, SF2.ypos, SF2.width, SF2.height, null);
-                            g.draw(new Rectangle(SF2.xpos, SF2.ypos, SF2.width, SF2.height));
-                        }
+            }
+        }
+            for (int x = 0; x < snowprintsArray.length; x++) {
+                if (snowprintsArray[x].isAlive) {
+                    g.drawImage(snowprintsArray[x].pic, snowprintsArray[x].xpos, snowprintsArray[x].ypos, snowprintsArray[x].width, snowprintsArray[x].height, null);
+                }
+            }
+        if (SF2.isAlive == true)
+            if (SF1.isAlive == true)
+                if (SF3.isAlive == true)
+                    if (SF4.isAlive == true)
+                        if (SF5.isAlive == true)
+                            if (snowman.isAlive == true) {
+                                g.drawImage(SF2Pic, SF2.xpos, SF2.ypos, SF2.width, SF2.height, null);
+                                g.draw(new Rectangle(SF2.xpos, SF2.ypos, SF2.width, SF2.height));
+                            }
         g.drawImage(SF1Pic, SF1.xpos, SF1.ypos, SF1.width, SF1.height, null);
         g.drawImage(SF2Pic, SF2.xpos, SF2.ypos, SF2.width, SF2.height, null);
         g.drawImage(SF3Pic, SF3.xpos, SF3.ypos, SF3.width, SF3.height, null);
@@ -280,5 +342,100 @@ public class BasicGameApp implements Runnable {
         g.dispose();
 
         bufferStrategy.show();
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        int code = e.getKeyCode();
+        System.out.println(code);
+
+        if (code == 87) {
+           // snowman.dy = -snowman.dy;
+            snowman.dy = -5;
+            int c = Math.abs(code);
+        }
+
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+
+    }
+
+    public void checkIntersections() {
+
+        if (snowman.rec.intersects(SF1.rec)) {
+            SF1.isAlive = false;
+        }
+        if(snowprints.rec.intersects(snowman.rec)) {for (int x = 0; x < snowprints.dx; x++)
+             {
+               // snowprints[x]. isalive = true;
+
+            }
+        }
+
+        for (int x = 0; x < snowflakes.length; x++) {
+            if (snowman.rec.intersects(snowflakes[x].rec)) {
+                snowflakes[x].isAlive = false;
+            }
+
+
+            
+//                    public void mousemoved;
+//                System.out.println(e.getX());
+//                snowmanPic.xpos=e.getX();
+//                snowmanPic.ypos=e.getY();
+        }
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+       // System.out.println(e.getID());
+
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+        System.out.println(e.getID());
+        snowman.dy = 0;
+        snowman.dx = 20;
+
+
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+        snowman.dx = 0;
+        snowman.dy =0;
+
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {
+        System.out.println(e.getID());
+
+        snowman.xpos=e.getX();
+                snowman.ypos=e.getY();
+//
     }
 }
